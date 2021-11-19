@@ -1,0 +1,99 @@
+{% extends "_document.html" %}
+
+{% block head %}
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js@3.6.0/dist/chart.min.js"></script>
+<style>
+  main {
+    background: #202020;
+  }
+
+  .amazonia-bg {
+    position: absolute;
+    background: url('https://img.olhardigital.com.br/wp-content/uploads/2021/03/AMZ1_WFI_20210303_RepresaSobradinho-scaled.jpg');
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: blur(4px) saturate(0) brightness(0.5);
+    height: 100%;
+    width: 100%;
+  }
+</style>
+{% endblock head %}
+
+{% block content %}
+<main>
+  <div class="amazonia-bg"></div>
+  <div class="relative z-1 mx-auto h-screen max-w-screen-md w-full flex items-center justify-center text-white">
+    <div class="py-16 px-12 bg-white bg-opacity-10 rounded-lg backdrop-blur shadow-xl">
+      <div class="mb-8">
+        <h1 class="text-6xl font-bold tracking-tighter text-green-500 mb-4">Área verde estimada para {{ context.year }}
+        </h1>
+        <h2 class="text-2xl text-gray-300">Estima-se que a área verde será de {{ context.green_area|round(2, 'floor')
+          }}% em {{
+          context.year }}</h2>
+      </div>
+      <p class="text-xs text-gray-400 mb-8">Note que o algoritmo é baseado em regressão linear, portanto quanto maior o
+        intervalo, menor a precisão.</p>
+      <div class="w-[640px]">
+        <canvas id="myChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+</main>
+{% endblock content %}
+
+{% block scripts %}
+<script type="text/javascript">
+  function renderChart(data) {
+    const context = document.getElementById('myChart').getContext('2d')
+
+    const labels = data.map(item => item.year)
+    const percentages = data.map(item => item.percentage)
+
+
+    new Chart(context, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Área verde estimada',
+          data: percentages,
+          fill: true,
+          backgroundColor: 'rgba(16, 185, 129, 0.125)',
+          borderColor: 'rgba(16, 185, 129, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        scales: {
+          x: {
+            grid: {
+              display: false,
+            }
+          },
+          y: {
+            beginAtZero: true,
+            grid: {
+              display: false,
+            }
+          },
+        }
+      }
+    })
+  }
+
+  async function renderPage() {
+    const response = await fetch('http://localhost:8000/api/predict?year={{ context.year }}')
+    const data = await response.json()
+
+    renderChart(data)
+  }
+
+  function setupChartJS() {
+    Chart.defaults.defaultFontColor = '#fff'
+  }
+
+  setupChartJS()
+  renderPage()
+</script>
+{% endblock scripts %}
